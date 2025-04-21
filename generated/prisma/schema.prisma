@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model team {
+  id                       Int                    @id @default(autoincrement())
+  symbol                   String                 @db.VarChar(4)
+  name                     String                 @db.VarChar(10)
+  win                      Int
+  runnerUp                 Int                    @map("runner_up")
+  players                  player[]
+  batterOppositionRecords  batter_daily_record[]
+  pitcherOppositionRecords pitcher_daily_record[]
+}
+
+model player {
+  id                  Int                    @id @default(autoincrement())
+  kboId               Int                    @unique @map("kbo_id")
+  profileImage        String?                @map("profile_image") @db.VarChar(256)
+  name                String?                @db.VarChar(64)
+  birth               DateTime?              @db.Date
+  backNumber          String?                @map("back_number") @db.VarChar(4)
+  school              String?                @db.VarChar(64)
+  team                team?                  @relation(fields: [teamId], references: [id])
+  teamId              Int?                   @map("team")
+  position            String?                @db.VarChar(4)
+  isActive            Boolean?               @default(false) @map("is_active")
+  batterDailyRecords  batter_daily_record[]
+  pitcherDailyRecords pitcher_daily_record[]
+}
+
+model batter_daily_record {
+  id                 Int      @id @default(autoincrement())
+  season             String   @db.VarChar(4)
+  date               DateTime @db.Date
+  player             player   @relation(fields: [fkPlayerId], references: [kboId])
+  fkPlayerId         Int      @map("fk_player_id")
+  team               team     @relation(fields: [fkOppositionTeamId], references: [id])
+  fkOppositionTeamId Int      @map("fk_opposition_team_id")
+  G                  Int
+  PA                 Int
+  AB                 Int
+  R                  Int
+  H                  Int
+  twoB               Int      @map("two_B")
+  threeB             Int      @map("three_B")
+  HR                 Int
+  TB                 Int
+  RBI                Int
+  SB                 Int
+  CS                 Int
+  BB                 Int
+  HBP                Int
+  SO                 Int
+  GDP                Int
+}
+
+model pitcher_daily_record {
+  id                 Int      @id @default(autoincrement())
+  season             String   @db.VarChar(4)
+  date               DateTime @db.Date
+  player             player   @relation(fields: [fkPlayerId], references: [kboId])
+  fkPlayerId         Int      @map("fk_player_id")
+  team               team     @relation(fields: [fkOppositionTeamId], references: [id])
+  fkOppositionTeamId Int      @map("fk_opposition_team_id")
+  G                  Int
+  CG                 Int
+  SHO                Int
+  W                  Int
+  L                  Int
+  SV                 Int
+  HLD                Int
+  TBF                Int
+  IP                 String   @db.VarChar(12)
+  H                  Int
+  HR                 Int
+  BB                 Int
+  HBP                Int
+  SO                 Int
+  R                  Int
+  ER                 Int
+}
