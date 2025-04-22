@@ -1,5 +1,5 @@
 # docker-compose.yml
-version: "3.8"
+version: '3.8'
 services:
   postgres:
     image: postgres:latest
@@ -9,9 +9,28 @@ services:
       POSTGRES_PASSWORD: kbo_password
       POSTGRES_DB: kbo_db
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U kbo_user -d kbo_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kbo_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://kbo_user:kbo_password@postgres:5432/kbo_db
+    ports:
+      - '3000:3000'
+    command: sh -c "npx prisma migrate deploy && npm run start:prod"
 
 volumes:
   postgres_data:
