@@ -36,6 +36,7 @@ model player {
   isActive             Boolean? @default(false) @map("is_active")
   batterDailyRecords  batter_daily_record[]
   pitcherDailyRecords pitcher_daily_record[]
+  milestoneRecords    milestone_record[]
 }
 
 model batter_daily_record {
@@ -46,22 +47,22 @@ model batter_daily_record {
   fkPlayerId   Int       @map("fk_player_id")
   team         team      @relation(fields: [fkOppositionTeamId], references: [id])
   fkOppositionTeamId Int @map("fk_opposition_team_id")
-  G            Int       @map("G")
-  PA           Int       @map("PA")
-  AB           Int       @map("AB")
-  R            Int       @map("R")
-  H            Int       @map("H")
+  G            Int       
+  PA           Int       
+  AB           Int       
+  R            Int       
+  H            Int    
   twoB         Int       @map("two_B")
   threeB       Int       @map("three_B")
-  HR           Int       @map("HR")
-  TB           Int       @map("TB")
-  RBI          Int       @map("RBI")
-  SB           Int       @map("SB")
-  CS           Int       @map("CS")
-  BB           Int       @map("BB")
-  HBP          Int       @map("HBP")
-  SO           Int       @map("SO")
-  GDP          Int       @map("GDP")
+  HR           Int       
+  TB           Int       
+  RBI          Int       
+  SB           Int       
+  CS           Int     
+  BB           Int       
+  HBP          Int      
+  SO           Int
+  GDP          Int       
 }
 
 model pitcher_daily_record {
@@ -73,21 +74,48 @@ model pitcher_daily_record {
   fkPlayerId   Int       @map("fk_player_id")
   team         team     @relation(fields: [fkOppositionTeamId], references: [id])
   fkOppositionTeamId Int @map("fk_opposition_team_id")
-  G            Int       @map("G")
-  CG           Int       @map("CG")
-  SHO          Int       @map("SHO")
-  W            Int       @map("W")
-  L            Int       @map("L")
-  SV           Int       @map("SV")
-  HLD          Int       @map("HLD")
-  TBF          Int       @map("TBF")
-  IP           String    @db.VarChar(12) @map("IP")
-  H            Int       @map("H")
-  HR           Int       @map("HR")
-  BB           Int       @map("BB")
-  HBP          Int       @map("HBP")
-  SO           Int       @map("SO")
-  R            Int       @map("R")
-  ER           Int       @map("ER")
+  G            Int       
+  CG           Int       
+  SHO          Int       
+  W            Int       
+  L            Int       
+  SV           Int       
+  HLD          Int       
+  TBF          Int       
+  IP           String    @db.VarChar(12)
+  H            Int       
+  HR           Int       
+  BB           Int       
+  HBP          Int       
+  SO           Int       
+  R            Int       
+  ER           Int       
 }
 
+model milestone_definition {
+  id           Int       @id @default(autoincrement())
+  record       String   
+  description  String 
+  position     String     
+  spanYears    Int?      @map("span_years")
+  milestoneConditions milestone_condition[]
+  milestoneRecords    milestone_record[]
+}
+
+model milestone_condition {
+  id           Int       @id @default(autoincrement())
+  milestoneDefiniton  milestone_definition   @relation(fields: [fkMilestoneDefinitionId], references: [id])
+  fkMilestoneDefinitionId  Int  @map("fk_milestone_definition_id")
+  category     String     
+  target       Int
+}
+
+model milestone_record {
+  id           Int       @id @default(autoincrement())
+  milestoneDefiniton  milestone_definition   @relation(fields: [fkMilestoneDefinitionId], references: [id])
+  fkMilestoneDefinitionId  Int  @map("fk_milestone_definition_id")
+  player       player    @relation(fields: [fkPlayerId], references: [kboId])
+  fkPlayerId   Int       @map("fk_player_id")
+  category     String     
+  date         DateTime  @default(now()) @db.Date
+}
