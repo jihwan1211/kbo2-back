@@ -36,16 +36,18 @@ model player {
   isActive             Boolean? @default(false) @map("is_active")
   batterDailyRecords  batter_daily_record[]
   pitcherDailyRecords pitcher_daily_record[]
+  batterYearlyRecords batter_yearly_record[]
+  pitcherYearlyRecords pitcher_yearly_record[]
   milestoneRecords    milestone_record[]
 }
 
 model batter_daily_record {
   id           Int       @id @default(autoincrement())
-  season       String    @db.VarChar(4)
+  season       String    @db.VarChar(4)  
   date         DateTime  @db.Date
   player       player    @relation(fields: [fkPlayerId], references: [kboId])
   fkPlayerId   Int       @map("fk_player_id")
-  team         team      @relation(fields: [fkOppositionTeamId], references: [id])
+  team         team     @relation(fields: [fkOppositionTeamId], references: [id])
   fkOppositionTeamId Int @map("fk_opposition_team_id")
   G            Int       
   PA           Int       
@@ -68,11 +70,10 @@ model batter_daily_record {
 model pitcher_daily_record {
   id           Int       @id @default(autoincrement())
   season       String    @db.VarChar(4)
-  role         String    @db.VarChar(4)
   date         DateTime  @db.Date
   player       player    @relation(fields: [fkPlayerId], references: [kboId])
   fkPlayerId   Int       @map("fk_player_id")
-  team         team     @relation(fields: [fkOppositionTeamId], references: [id])
+  team         team      @relation(fields: [fkOppositionTeamId], references: [id])
   fkOppositionTeamId Int @map("fk_opposition_team_id")
   G            Int       
   CG           Int       
@@ -80,7 +81,57 @@ model pitcher_daily_record {
   W            Int       
   L            Int       
   SV           Int       
-  HLD          Int       
+  HLD          Int    
+  TBF          Int       
+  IP           String    @db.VarChar(12)
+  H            Int       
+  HR           Int       
+  BB           Int       
+  HBP          Int       
+  SO           Int       
+  R            Int       
+  ER           Int       
+}
+
+model batter_yearly_record {
+  id           Int       @id @default(autoincrement())
+  season       String    @db.VarChar(4)
+  year         Int       @db.SmallInt
+  player       player    @relation(fields: [fkPlayerId], references: [kboId])
+  fkPlayerId   Int       @map("fk_player_id")
+  G            Int       
+  PA           Int       
+  AB           Int       
+  R            Int       
+  H            Int    
+  twoB         Int       @map("two_B")
+  threeB       Int       @map("three_B")
+  HR           Int       
+  TB           Int       
+  RBI          Int       
+  SB           Int       
+  CS           Int     
+  BB           Int       
+  HBP          Int      
+  SO           Int
+  GDP          Int  
+  E            Int     
+}
+
+model pitcher_yearly_record {
+  id           Int       @id @default(autoincrement())
+  season       String    @db.VarChar(4)
+  year         Int       @db.SmallInt
+  player       player    @relation(fields: [fkPlayerId], references: [kboId])
+  fkPlayerId   Int       @map("fk_player_id")
+  G            Int       
+  CG           Int       
+  SHO          Int       
+  W            Int       
+  L            Int       
+  SV           Int       
+  HLD          Int   
+  WPCT         Float       
   TBF          Int       
   IP           String    @db.VarChar(12)
   H            Int       
