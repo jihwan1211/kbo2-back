@@ -89,7 +89,8 @@ model pitcher_daily_record {
   HBP          Int       
   SO           Int       
   R            Int       
-  ER           Int       
+  ER           Int     
+  role         String     @db.VarChar(2)  
 }
 
 model batter_yearly_record {
@@ -166,6 +167,5 @@ model milestone_record {
   fkMilestoneDefinitionId  Int  @map("fk_milestone_definition_id")
   player       player    @relation(fields: [fkPlayerId], references: [kboId])
   fkPlayerId   Int       @map("fk_player_id")
-  category     String     
   date         DateTime  @default(now()) @db.Date
 }

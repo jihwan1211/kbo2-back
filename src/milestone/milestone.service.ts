@@ -1,26 +1,451 @@
-import { Injectable } from '@nestjs/common';
-import { CreateMilestoneDto } from './dto/create-milestone.dto';
-import { UpdateMilestoneDto } from './dto/update-milestone.dto';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { PlayerService } from 'src/player/player.service';
+import { RecordService } from 'src/record/record.service';
+import {
+  CreateMilestoneDto,
+  PostMilestoneDto,
+} from './dto/create-milestone.dto';
+import { AggreatePitcherRecordDto } from 'src/record/dto/aggreatePitcherRecord.dto';
+import { AggreateBatterRecordDto } from 'src/record/dto/aggreateBatterRecord.dto';
 
 @Injectable()
 export class MilestoneService {
-  create(createMilestoneDto: CreateMilestoneDto) {
-    return 'This action adds a new milestone';
+  private readonly logger = new Logger(MilestoneService.name);
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly recordService: RecordService,
+    private readonly playerService: PlayerService,
+  ) {}
+
+  getDefinitions() {
+    try {
+      return this.prisma.milestone_definition.findMany();
+    } catch (err) {
+      this.logger.error('Failed to get milestone definitions', err);
+      throw err;
+    }
   }
 
-  findAll() {
-    return `This action returns all milestone`;
+  getConditions() {
+    try {
+      return this.prisma.milestone_condition.findMany();
+    } catch (err) {
+      this.logger.error('Failed to get milestone conditions', err);
+      throw err;
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} milestone`;
+  async createMilestones(postMilestoneDto: PostMilestoneDto) {
+    try {
+      const activeBatters = await this.playerService.getActiveBatters();
+      const activePitchers = await this.playerService.getAcivePitchers();
+
+      const aggregateBatterRecords =
+        this.recordService.getAggregateBatterRecords(
+          activeBatters,
+          postMilestoneDto.date,
+        );
+      const aggregatePitcherRecords =
+        this.recordService.getAggregatePitcherRecords(
+          activePitchers,
+          postMilestoneDto.date,
+        );
+
+      for await (const record of aggregateBatterRecords)
+        await this.createBatterMilestoneRecord(record, postMilestoneDto.date);
+
+      for await (const record of aggregatePitcherRecords) {
+        await this.createPitcherMilestoneRecord(record, postMilestoneDto.date);
+      }
+    } catch (err) {
+      this.logger.error('Failed to create milestones', err);
+      throw err;
+    }
   }
 
-  update(id: number, updateMilestoneDto: UpdateMilestoneDto) {
-    return `This action updates a #${id} milestone`;
+  async createOnePlayerMilestones(
+    id: number,
+    postMilestoneDto: PostMilestoneDto,
+  ) {
+    try {
+      const player = await this.playerService.findOne(id);
+
+      if (!player || player.position === null)
+        throw new NotFoundException(
+          `player id : ${id} 선수는 존재하지 않거나, milestone 연산을 수행할 수 없습니다.`,
+        );
+
+      if (player.position === '투수') {
+        const aggregatePitcherRecords =
+          this.recordService.getAggregatePitcherRecords(
+            [player],
+            postMilestoneDto.date,
+          );
+        for await (const record of aggregatePitcherRecords) {
+          await this.createPitcherMilestoneRecord(
+            record,
+            postMilestoneDto.date,
+          );
+        }
+      } else {
+        const aggregateBatterRecords =
+          this.recordService.getAggregateBatterRecords(
+            [player],
+            postMilestoneDto.date,
+          );
+        for await (const record of aggregateBatterRecords)
+          await this.createBatterMilestoneRecord(record, postMilestoneDto.date);
+      }
+    } catch (err) {
+      this.logger.error('Failed to create one player milestones', err);
+      throw err;
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} milestone`;
+  async createBatterMilestoneRecord(
+    record: AggreateBatterRecordDto,
+    date: string,
+  ) {
+    try {
+      const milestoneConditions = await this.getConditions();
+      milestoneConditions.forEach(async (condition) => {
+        if (condition.category === 'G') {
+          if (
+            record.G >= condition.target - 10 &&
+            record.G <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 출장수 : ${record.G}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'PA') {
+          if (
+            record.PA >= condition.target - 30 &&
+            record.PA <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 타석 : ${record.PA}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'R') {
+          if (
+            record.R >= condition.target - 10 &&
+            record.R <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 득점 : ${record.R}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'H') {
+          if (
+            record.H >= condition.target - 20 &&
+            record.H <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 안타 : ${record.H}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'twoB') {
+          if (
+            record.twoB >= condition.target - 10 &&
+            record.twoB <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 2루타 : ${record.twoB}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'threeB') {
+          if (
+            record.threeB >= condition.target - 3 &&
+            record.threeB <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 3루타 : ${record.threeB}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'HR') {
+          if (
+            record.HR >= condition.target - 5 &&
+            record.HR <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 홈런 : ${record.HR}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'TB') {
+          if (
+            record.TB >= condition.target - 50 &&
+            record.TB <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 루타 : ${record.TB}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'RBI') {
+          if (
+            record.RBI >= condition.target - 10 &&
+            record.RBI <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 타점 : ${record.RBI}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'SB') {
+          if (
+            record.SB >= condition.target - 10 &&
+            record.SB <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 도루 : ${record.SB}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'BB') {
+          if (
+            record.BB >= condition.target - 10 &&
+            record.BB <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 볼넷 : ${record.BB}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'HBP') {
+          if (
+            record.HBP >= condition.target - 5 &&
+            record.HBP <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 사구 : ${record.HBP}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        }
+      });
+    } catch (err) {
+      this.logger.error('Failed to create batter milestone record', err);
+      throw err;
+    }
+  }
+
+  async createPitcherMilestoneRecord(
+    record: AggreatePitcherRecordDto,
+    date: string,
+  ) {
+    try {
+      const milestoneConditions = await this.getConditions();
+      milestoneConditions.forEach(async (condition) => {
+        if (condition.category === 'G') {
+          if (
+            record.G >= condition.target - 5 &&
+            record.G <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 출장수 : ${record.G}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'CG') {
+          if (
+            record.CG >= condition.target - 1 &&
+            record.CG <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 완투 : ${record.CG}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'SHO') {
+          if (
+            record.SHO >= condition.target - 1 &&
+            record.SHO <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 완봉 : ${record.SHO}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'W') {
+          if (
+            record.W >= condition.target - 3 &&
+            record.W <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 승 : ${record.W}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'SV') {
+          if (
+            record.SV >= condition.target - 5 &&
+            record.SV <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 선발승 : ${record.SV}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'HLD') {
+          if (
+            record.HLD >= condition.target - 5 &&
+            record.HLD <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 홀드 : ${record.HLD}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'TBF') {
+          if (
+            record.TBF >= condition.target - 50 &&
+            record.TBF <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 타자수 : ${record.TBF}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'IP') {
+          const ipArray = record.IP.split(' ');
+          let IP = 0;
+          if (!ipArray[0].includes('/')) {
+            IP = Number(ipArray[0]);
+          }
+
+          if (IP >= condition.target - 20 && IP <= condition.target) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 이닝 : ${IP}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        } else if (condition.category === 'SO') {
+          if (
+            record.SO >= condition.target - 30 &&
+            record.SO <= condition.target
+          ) {
+            this.logger.log(
+              `player : ${record.fkPlayerId}, 삼진 : ${record.SO}, condition : ${condition.target} ${condition.category} `,
+            );
+            await this.createMilestone({
+              fkPlayerKboId: record.fkPlayerId,
+              fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
+              date,
+            });
+          }
+        }
+      });
+    } catch (err) {
+      this.logger.error('Failed to create pitcher milestone record', err);
+      throw err;
+    }
+  }
+
+  async createMilestone(createMilestoneDto: CreateMilestoneDto) {
+    try {
+      return this.prisma.milestone_record.create({
+        data: {
+          player: {
+            connect: { kboId: createMilestoneDto.fkPlayerKboId },
+          },
+          milestoneDefiniton: {
+            connect: { id: createMilestoneDto.fkMilestoneDefinitionId },
+          },
+          date: new Date(createMilestoneDto.date),
+        },
+      });
+    } catch (err) {
+      this.logger.error('Failed to insert milestone', err);
+      throw err;
+    }
   }
 }

@@ -1,35 +1,67 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class PlayerService {
+  private readonly logger = new Logger(PlayerService.name);
   constructor(private readonly prisma: PrismaService) {}
 
-  create() {
-    return 'This action adds a new player';
-  }
-
-  findAll() {
-    return `This action returns all player`;
-  }
-
   findOne(id: number) {
-    return `This action returns a #${id} player`;
-  }
-
-  update(id: number) {
-    return `This action updates a #${id} player`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} player`;
+    try {
+      return this.prisma.player.findUnique({
+        where: {
+          id: id,
+        },
+      });
+    } catch (err) {
+      this.logger.error(`Failed to find player ${id}`, err);
+      throw err;
+    }
   }
 
   getAcivePlayers() {
-    return this.prisma.player.findMany({
-      where: {
-        isActive: true,
-      },
-    });
+    try {
+      return this.prisma.player.findMany({
+        where: {
+          isActive: true,
+        },
+      });
+    } catch (err) {
+      this.logger.error('Failed to get active players', err);
+      throw err;
+    }
+  }
+
+  getActiveBatters() {
+    try {
+      return this.prisma.player.findMany({
+        where: {
+          isActive: true,
+          position: {
+            not: '투수',
+          },
+          NOT: {
+            position: null,
+          },
+        },
+      });
+    } catch (err) {
+      this.logger.error('Failed to get active batters', err);
+      throw err;
+    }
+  }
+
+  getAcivePitchers() {
+    try {
+      return this.prisma.player.findMany({
+        where: {
+          isActive: true,
+          position: '투수',
+        },
+      });
+    } catch (err) {
+      this.logger.error('Failed to get active pitchers', err);
+      throw err;
+    }
   }
 }
