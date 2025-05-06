@@ -19,6 +19,8 @@ model team {
   players              player[]
   batterOppositionRecords   batter_daily_record[]
   pitcherOppositionRecords  pitcher_daily_record[]
+  homeGames           game[]   @relation("HomeTeam")
+  awayGames           game[]   @relation("AwayTeam")
 }
 
 model player {
@@ -168,4 +170,18 @@ model milestone_record {
   player       player    @relation(fields: [fkPlayerId], references: [kboId])
   fkPlayerId   Int       @map("fk_player_id")
   date         DateTime  @default(now()) @db.Date
+}
+
+model game {
+  id            Int       @id @default(autoincrement())
+  date          DateTime  @db.Timestamp
+  homeTeam      team      @relation("HomeTeam", fields : [fkHomeTeamId], references : [id])
+  fkHomeTeamId  Int       @map("fk_home_team_id")
+  awayTeam      team      @relation("AwayTeam", fields : [fkAwayTeamId], references : [id])
+  fkAwayTeamId  Int       @map("fk_away_team_id")
+  homeTeamScore Int?       @map("home_team_score")
+  awayTeamScore Int?       @map("away_team_score")
+  memo          String?    @db.VarChar(16)  
+
+  @@unique([date, fkHomeTeamId, fkAwayTeamId])
 }
