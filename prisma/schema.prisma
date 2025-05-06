@@ -40,6 +40,7 @@ model player {
   batterYearlyRecords batter_yearly_record[]
   pitcherYearlyRecords pitcher_yearly_record[]
   milestoneRecords    milestone_record[]
+  roaster             roaster[]
 }
 
 model batter_daily_record {
@@ -184,4 +185,11 @@ model game {
   memo          String?    @db.VarChar(16)  
 
   @@unique([date, fkHomeTeamId, fkAwayTeamId])
+}
+
+model roaster {
+  id            Int       @id @default(autoincrement())
+  date          DateTime  @db.Date
+  player        player    @relation(fields : [fkPlayerId], references : [kboId])
+  fkPlayerId    Int       @map("fk_player_id")
 }

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { FindRoasterPlayerDto } from './dto/findRoasterPlayer.dto';
 
 @Injectable()
 export class PlayerService {
@@ -19,6 +20,26 @@ export class PlayerService {
     }
   }
 
+  findOneRoaster(findRoasterPlayerDto: FindRoasterPlayerDto) {
+    const { teamSymbol, backNumber, name } = findRoasterPlayerDto;
+    try {
+      return this.prisma.player.findFirst({
+        where: {
+          team: {
+            symbol: teamSymbol,
+          },
+          backNumber: backNumber,
+          name: name,
+        },
+      });
+    } catch (err) {
+      this.logger.error(
+        `Failed to find player ${teamSymbol} ${backNumber} ${name}`,
+        err,
+      );
+      throw err;
+    }
+  }
   getAcivePlayers() {
     try {
       return this.prisma.player.findMany({
