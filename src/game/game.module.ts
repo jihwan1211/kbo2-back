@@ -3,9 +3,10 @@ import { GameService } from './game.service';
 import { GameController } from './game.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { MilestoneModule } from 'src/milestone/milestone.module';
+import { TeamModule } from 'src/team/team.module';
 
 @Module({
-  imports: [PrismaModule, MilestoneModule],
+  imports: [PrismaModule, MilestoneModule, TeamModule],
   providers: [GameService],
   controllers: [GameController],
   exports: [GameService],
