@@ -8,7 +8,9 @@ import {
 } from './dto/create-milestone.dto';
 import { AggreatePitcherRecordDto } from 'src/record/dto/aggreatePitcherRecord.dto';
 import { AggreateBatterRecordDto } from 'src/record/dto/aggreateBatterRecord.dto';
-
+import { RoasterService } from 'src/roaster/roaster.service';
+import { pipe, partition, toArray } from '@fxts/core';
+import { GetMilestonesDto } from './dto/getMilestones.dto';
 @Injectable()
 export class MilestoneService {
   private readonly logger = new Logger(MilestoneService.name);
@@ -16,7 +18,137 @@ export class MilestoneService {
     private readonly prisma: PrismaService,
     private readonly recordService: RecordService,
     private readonly playerService: PlayerService,
+    private readonly roasterService: RoasterService,
   ) {}
+
+  async getMatchupRecords(homeTeamId: number, awayTeamId: number, date: Date) {
+    try {
+      const [homeRoasterPlayers, awayRoasterPlayers] = await Promise.all([
+        this.roasterService.getRoasterPlayers(homeTeamId, date),
+        this.roasterService.getRoasterPlayers(awayTeamId, date),
+      ]);
+
+      const [homeTeamMilestones, awayTeamMilestones] = await Promise.all([
+        this.getMilestones(homeTeamId, date),
+        this.getMilestones(awayTeamId, date),
+      ]);
+
+      const [
+        homeTeamRoasterMatchedMilestones,
+        homeTeamRoasterUnmatchedMilestones,
+      ] = await pipe(
+        homeTeamMilestones,
+        partition((milestone) =>
+          homeRoasterPlayers.includes(milestone.player.id),
+        ),
+        toArray,
+      );
+
+      const [
+        awayTeamRoasterMatchedMilestones,
+        awayTeamRoasterUnmatchedMilestones,
+      ] = await pipe(
+        awayTeamMilestones,
+        partition((milestone) =>
+          awayRoasterPlayers.includes(milestone.player.id),
+        ),
+        toArray,
+      );
+
+      return {
+        homeTeamRoasterMatchedMilestones,
+        homeTeamRoasterUnmatchedMilestones,
+        awayTeamRoasterMatchedMilestones,
+        awayTeamRoasterUnmatchedMilestones,
+      };
+    } catch (error) {
+      this.logger.error('Failed to get matchup records', error);
+      throw error;
+    }
+  }
+
+  async getMilestones(teamId: number, date: Date): Promise<GetMilestonesDto[]> {
+    try {
+      const milestones = await this.prisma.milestone_record.findMany({
+        where: {
+          date: date,
+          player: {
+            team: {
+              id: teamId,
+            },
+          },
+        },
+        include: {
+          player: {
+            select: {
+              id: true,
+              name: true,
+              backNumber: true,
+              team: {
+                select: {
+                  symbol: true,
+                  name: true,
+                },
+              },
+            },
+          },
+          milestoneDefinition: {
+            select: {
+              id: true,
+              record: true,
+              description: true,
+              position: true,
+              spanYears: true,
+              milestoneConditions: {
+                select: {
+                  id: true,
+                  category: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return Object.values(
+        milestones.reduce((acc, milestone) => {
+          if (!acc[milestone.player.id]) {
+            acc[milestone.player.id] = {
+              id: milestone.id,
+              date: milestone.date,
+              player: {
+                id: milestone.player.id,
+                name: milestone.player.name,
+                backNumber: milestone.player.backNumber,
+                team: {
+                  ...milestone.player.team,
+                },
+              },
+              milestoneDefinition: [
+                {
+                  ...milestone.milestoneDefinition,
+                  milestoneConditions: [
+                    ...milestone.milestoneDefinition.milestoneConditions,
+                  ],
+                },
+              ],
+            };
+          } else {
+            acc[milestone.player.id].milestoneDefinition.push({
+              ...milestone.milestoneDefinition,
+              milestoneConditions: [
+                ...milestone.milestoneDefinition.milestoneConditions,
+              ],
+            });
+          }
+          return acc;
+        }, {}),
+      );
+    } catch (err) {
+      this.logger.error('Failed to get milestones', err);
+      throw err;
+    }
+  }
 
   getDefinitions() {
     try {
@@ -432,15 +564,18 @@ export class MilestoneService {
 
   async createMilestone(createMilestoneDto: CreateMilestoneDto) {
     try {
+      const nextDay = new Date(createMilestoneDto.date);
+      nextDay.setDate(nextDay.getDate() + 1);
+
       return this.prisma.milestone_record.create({
         data: {
           player: {
             connect: { kboId: createMilestoneDto.fkPlayerKboId },
           },
-          milestoneDefiniton: {
+          milestoneDefinition: {
             connect: { id: createMilestoneDto.fkMilestoneDefinitionId },
           },
-          date: new Date(createMilestoneDto.date),
+          date: nextDay,
         },
       });
     } catch (err) {

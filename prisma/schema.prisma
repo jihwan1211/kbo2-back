@@ -158,7 +158,7 @@ model milestone_definition {
 
 model milestone_condition {
   id           Int       @id @default(autoincrement())
-  milestoneDefiniton  milestone_definition   @relation(fields: [fkMilestoneDefinitionId], references: [id])
+  milestoneDefinition  milestone_definition   @relation(fields: [fkMilestoneDefinitionId], references: [id])
   fkMilestoneDefinitionId  Int  @map("fk_milestone_definition_id")
   category     String     
   target       Int
@@ -166,7 +166,7 @@ model milestone_condition {
 
 model milestone_record {
   id           Int       @id @default(autoincrement())
-  milestoneDefiniton  milestone_definition   @relation(fields: [fkMilestoneDefinitionId], references: [id])
+  milestoneDefinition  milestone_definition   @relation(fields: [fkMilestoneDefinitionId], references: [id])
   fkMilestoneDefinitionId  Int  @map("fk_milestone_definition_id")
   player       player    @relation(fields: [fkPlayerId], references: [kboId])
   fkPlayerId   Int       @map("fk_player_id")

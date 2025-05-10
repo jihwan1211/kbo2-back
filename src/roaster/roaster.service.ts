@@ -11,6 +11,31 @@ export class RoasterService {
     private readonly playerService: PlayerService,
   ) {}
 
+  async getRoasterPlayers(teamId: number, date: Date) {
+    try {
+      const roasterPlayers = await this.prisma.roaster.findMany({
+        where: {
+          date: date,
+          player: {
+            teamId,
+          },
+        },
+        include: {
+          player: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      });
+
+      return roasterPlayers.map((roaster) => roaster.player.id);
+    } catch (error) {
+      this.logger.error('Failed to get roaster', error);
+      throw error;
+    }
+  }
+
   async insertRoaster(insertRoasterDto: InsertRoasterDto) {
     const { date, roasterData } = insertRoasterDto;
     this.logger.debug(`${date} 로스터 등록`);
