@@ -21,20 +21,20 @@ export class PlayerService {
   }
 
   findOneRoaster(findRoasterPlayerDto: FindRoasterPlayerDto) {
-    const { teamSymbol, backNumber, name } = findRoasterPlayerDto;
+    const { teamSymbol, birth, name } = findRoasterPlayerDto;
     try {
       return this.prisma.player.findFirst({
         where: {
           team: {
             symbol: teamSymbol,
           },
-          backNumber: backNumber,
+          birth: new Date(birth),
           name: name,
         },
       });
     } catch (err) {
       this.logger.error(
-        `Failed to find player ${teamSymbol} ${backNumber} ${name}`,
+        `Failed to find player ${teamSymbol} ${birth} ${name}`,
         err,
       );
       throw err;

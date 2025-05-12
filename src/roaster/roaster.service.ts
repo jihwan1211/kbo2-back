@@ -40,28 +40,32 @@ export class RoasterService {
     const { date, roasterData } = insertRoasterDto;
     this.logger.debug(`${date} 로스터 등록`);
     try {
-      roasterData.forEach(async (roasterData) => {
-        const { teamSymbol, backNumber, name } = roasterData;
+      await this.prisma.$transaction(async (tx) => {
+        for (const data of roasterData) {
+          const { teamSymbol, name, birth } = data;
 
-        const player = await this.playerService.findOneRoaster({
-          teamSymbol,
-          backNumber,
-          name,
-        });
+          const player = await this.playerService.findOneRoaster({
+            teamSymbol,
+            birth,
+            name,
+          });
 
-        if (!player) {
-          this.logger.error('Player not found', teamSymbol, backNumber, name);
-          throw new NotFoundException('Player not found');
-        }
+          if (!player) {
+            this.logger.error('Player not found', teamSymbol, birth, name);
+            throw new NotFoundException(
+              `Player not found: ${teamSymbol} #${birth} ${name}`,
+            );
+          }
 
-        await this.prisma.roaster.create({
-          data: {
-            player: {
-              connect: { kboId: player.kboId },
+          await tx.roaster.create({
+            data: {
+              player: {
+                connect: { kboId: player.kboId },
+              },
+              date: new Date(date),
             },
-            date: new Date(date),
-          },
-        });
+          });
+        }
       });
     } catch (error) {
       this.logger.error('error while inserting roaster', error);

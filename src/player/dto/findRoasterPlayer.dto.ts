@@ -1,5 +1,5 @@
 export class FindRoasterPlayerDto {
   teamSymbol: string;
-  backNumber: string;
+  birth: string;
   name: string;
 }
