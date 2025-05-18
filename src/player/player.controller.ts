@@ -1,6 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Patch, Body } from '@nestjs/common';
 import { PlayerService } from './player.service';
-
+import { TrackPlayerChangeDto } from './dto/trackPlayerChange.dto';
 @Controller('players')
 export class PlayerController {
   constructor(private readonly playerService: PlayerService) {}
@@ -8,5 +8,10 @@ export class PlayerController {
   @Get('active')
   getActivePlayers() {
     return this.playerService.getAcivePlayers();
+  }
+
+  @Patch('/player')
+  updatePlayer(@Body() body: TrackPlayerChangeDto) {
+    return this.playerService.patchTrackPlayerChange(body);
   }
 }

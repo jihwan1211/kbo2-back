@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FindRoasterPlayerDto } from './dto/findRoasterPlayer.dto';
+import { TrackPlayerChangeDto } from './dto/trackPlayerChange.dto';
 
 @Injectable()
 export class PlayerService {
@@ -82,6 +83,43 @@ export class PlayerService {
       });
     } catch (err) {
       this.logger.error('Failed to get active pitchers', err);
+      throw err;
+    }
+  }
+
+  async patchTrackPlayerChange(trackPlayerChangeDto: TrackPlayerChangeDto) {
+    try {
+      const { data } = trackPlayerChangeDto;
+
+      for (const change of data) {
+        const player = await this.prisma.player.findFirst({
+          where: {
+            team: {
+              id: change.teamId,
+            },
+            name: change.name,
+            backNumber: change.prevBackNumber,
+          },
+        });
+
+        if (!player) {
+          throw new NotFoundException(
+            `Player not found: ID=${change.teamId}, Name=${change.name}, Number=${change.prevBackNumber}`,
+          );
+        }
+
+        await this.prisma.player.update({
+          where: { id: player.id },
+          data: { backNumber: change.newBackNumber },
+        });
+      }
+
+      return {
+        message: 'track player change success',
+        updatedCount: data.length,
+      };
+    } catch (err) {
+      this.logger.error('Failed to patch track player change', err);
       throw err;
     }
   }
