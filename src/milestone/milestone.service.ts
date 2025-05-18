@@ -245,7 +245,7 @@ export class MilestoneService {
         if (condition.category === 'G') {
           if (
             record.G >= condition.target - 10 &&
-            record.G <= condition.target
+            record.G < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 출장수 : ${record.G}, condition : ${condition.target} ${condition.category} `,
@@ -259,7 +259,7 @@ export class MilestoneService {
         } else if (condition.category === 'PA') {
           if (
             record.PA >= condition.target - 30 &&
-            record.PA <= condition.target
+            record.PA < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 타석 : ${record.PA}, condition : ${condition.target} ${condition.category} `,
@@ -273,7 +273,7 @@ export class MilestoneService {
         } else if (condition.category === 'R') {
           if (
             record.R >= condition.target - 10 &&
-            record.R <= condition.target
+            record.R < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 득점 : ${record.R}, condition : ${condition.target} ${condition.category} `,
@@ -287,7 +287,7 @@ export class MilestoneService {
         } else if (condition.category === 'H') {
           if (
             record.H >= condition.target - 20 &&
-            record.H <= condition.target
+            record.H < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 안타 : ${record.H}, condition : ${condition.target} ${condition.category} `,
@@ -301,7 +301,7 @@ export class MilestoneService {
         } else if (condition.category === 'twoB') {
           if (
             record.twoB >= condition.target - 10 &&
-            record.twoB <= condition.target
+            record.twoB < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 2루타 : ${record.twoB}, condition : ${condition.target} ${condition.category} `,
@@ -315,7 +315,7 @@ export class MilestoneService {
         } else if (condition.category === 'threeB') {
           if (
             record.threeB >= condition.target - 3 &&
-            record.threeB <= condition.target
+            record.threeB < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 3루타 : ${record.threeB}, condition : ${condition.target} ${condition.category} `,
@@ -329,7 +329,7 @@ export class MilestoneService {
         } else if (condition.category === 'HR') {
           if (
             record.HR >= condition.target - 5 &&
-            record.HR <= condition.target
+            record.HR < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 홈런 : ${record.HR}, condition : ${condition.target} ${condition.category} `,
@@ -343,7 +343,7 @@ export class MilestoneService {
         } else if (condition.category === 'TB') {
           if (
             record.TB >= condition.target - 50 &&
-            record.TB <= condition.target
+            record.TB < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 루타 : ${record.TB}, condition : ${condition.target} ${condition.category} `,
@@ -357,7 +357,7 @@ export class MilestoneService {
         } else if (condition.category === 'RBI') {
           if (
             record.RBI >= condition.target - 10 &&
-            record.RBI <= condition.target
+            record.RBI < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 타점 : ${record.RBI}, condition : ${condition.target} ${condition.category} `,
@@ -371,7 +371,7 @@ export class MilestoneService {
         } else if (condition.category === 'SB') {
           if (
             record.SB >= condition.target - 10 &&
-            record.SB <= condition.target
+            record.SB < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 도루 : ${record.SB}, condition : ${condition.target} ${condition.category} `,
@@ -385,7 +385,7 @@ export class MilestoneService {
         } else if (condition.category === 'BB') {
           if (
             record.BB >= condition.target - 10 &&
-            record.BB <= condition.target
+            record.BB < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 볼넷 : ${record.BB}, condition : ${condition.target} ${condition.category} `,
@@ -399,7 +399,7 @@ export class MilestoneService {
         } else if (condition.category === 'HBP') {
           if (
             record.HBP >= condition.target - 5 &&
-            record.HBP <= condition.target
+            record.HBP < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 사구 : ${record.HBP}, condition : ${condition.target} ${condition.category} `,
@@ -426,10 +426,7 @@ export class MilestoneService {
       const milestoneConditions = await this.getConditions();
       milestoneConditions.forEach(async (condition) => {
         if (condition.category === 'G') {
-          if (
-            record.G >= condition.target - 5 &&
-            record.G <= condition.target
-          ) {
+          if (record.G >= condition.target - 5 && record.G < condition.target) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 출장수 : ${record.G}, condition : ${condition.target} ${condition.category} `,
             );
@@ -442,7 +439,7 @@ export class MilestoneService {
         } else if (condition.category === 'CG') {
           if (
             record.CG >= condition.target - 1 &&
-            record.CG <= condition.target
+            record.CG < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 완투 : ${record.CG}, condition : ${condition.target} ${condition.category} `,
@@ -456,7 +453,7 @@ export class MilestoneService {
         } else if (condition.category === 'SHO') {
           if (
             record.SHO >= condition.target - 1 &&
-            record.SHO <= condition.target
+            record.SHO < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 완봉 : ${record.SHO}, condition : ${condition.target} ${condition.category} `,
@@ -468,10 +465,7 @@ export class MilestoneService {
             });
           }
         } else if (condition.category === 'W') {
-          if (
-            record.W >= condition.target - 3 &&
-            record.W <= condition.target
-          ) {
+          if (record.W >= condition.target - 3 && record.W < condition.target) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 승 : ${record.W}, condition : ${condition.target} ${condition.category} `,
             );
@@ -484,7 +478,7 @@ export class MilestoneService {
         } else if (condition.category === 'SV') {
           if (
             record.SV >= condition.target - 5 &&
-            record.SV <= condition.target
+            record.SV < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 선발승 : ${record.SV}, condition : ${condition.target} ${condition.category} `,
@@ -498,7 +492,7 @@ export class MilestoneService {
         } else if (condition.category === 'HLD') {
           if (
             record.HLD >= condition.target - 5 &&
-            record.HLD <= condition.target
+            record.HLD < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 홀드 : ${record.HLD}, condition : ${condition.target} ${condition.category} `,
@@ -512,7 +506,7 @@ export class MilestoneService {
         } else if (condition.category === 'TBF') {
           if (
             record.TBF >= condition.target - 50 &&
-            record.TBF <= condition.target
+            record.TBF < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 타자수 : ${record.TBF}, condition : ${condition.target} ${condition.category} `,
@@ -530,7 +524,7 @@ export class MilestoneService {
             IP = Number(ipArray[0]);
           }
 
-          if (IP >= condition.target - 20 && IP <= condition.target) {
+          if (IP >= condition.target - 20 && IP < condition.target) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 이닝 : ${IP}, condition : ${condition.target} ${condition.category} `,
             );
@@ -543,7 +537,7 @@ export class MilestoneService {
         } else if (condition.category === 'SO') {
           if (
             record.SO >= condition.target - 30 &&
-            record.SO <= condition.target
+            record.SO < condition.target
           ) {
             this.logger.log(
               `player : ${record.fkPlayerId}, 삼진 : ${record.SO}, condition : ${condition.target} ${condition.category} `,
