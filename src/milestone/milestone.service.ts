@@ -127,6 +127,8 @@ export class MilestoneService {
               milestoneDefinition: [
                 {
                   ...milestone.milestoneDefinition,
+                  category: milestone.category,
+                  currentRecord: milestone.currentRecord,
                   milestoneConditions: [
                     ...milestone.milestoneDefinition.milestoneConditions,
                   ],
@@ -136,6 +138,8 @@ export class MilestoneService {
           } else {
             acc[milestone.player.id].milestoneDefinition.push({
               ...milestone.milestoneDefinition,
+              category: milestone.category,
+              currentRecord: milestone.currentRecord,
               milestoneConditions: [
                 ...milestone.milestoneDefinition.milestoneConditions,
               ],
@@ -254,6 +258,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.G,
             });
           }
         } else if (condition.category === 'PA') {
@@ -268,6 +274,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.PA,
             });
           }
         } else if (condition.category === 'R') {
@@ -282,6 +290,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.R,
             });
           }
         } else if (condition.category === 'H') {
@@ -296,6 +306,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.H,
             });
           }
         } else if (condition.category === 'twoB') {
@@ -310,6 +322,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.twoB,
             });
           }
         } else if (condition.category === 'threeB') {
@@ -324,6 +338,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.threeB,
             });
           }
         } else if (condition.category === 'HR') {
@@ -338,6 +354,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.HR,
             });
           }
         } else if (condition.category === 'TB') {
@@ -352,6 +370,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.TB,
             });
           }
         } else if (condition.category === 'RBI') {
@@ -366,6 +386,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.RBI,
             });
           }
         } else if (condition.category === 'SB') {
@@ -380,6 +402,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.SB,
             });
           }
         } else if (condition.category === 'BB') {
@@ -394,6 +418,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.BB,
             });
           }
         } else if (condition.category === 'HBP') {
@@ -408,6 +434,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.HBP,
             });
           }
         }
@@ -434,6 +462,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.G,
             });
           }
         } else if (condition.category === 'CG') {
@@ -448,6 +478,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.CG,
             });
           }
         } else if (condition.category === 'SHO') {
@@ -462,6 +494,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.SHO,
             });
           }
         } else if (condition.category === 'W') {
@@ -473,6 +507,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.W,
             });
           }
         } else if (condition.category === 'SV') {
@@ -487,6 +523,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.SV,
             });
           }
         } else if (condition.category === 'HLD') {
@@ -501,6 +539,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.HLD,
             });
           }
         } else if (condition.category === 'TBF') {
@@ -515,6 +555,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.TBF,
             });
           }
         } else if (condition.category === 'IP') {
@@ -532,6 +574,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.IP,
             });
           }
         } else if (condition.category === 'SO') {
@@ -546,6 +590,8 @@ export class MilestoneService {
               fkPlayerKboId: record.fkPlayerId,
               fkMilestoneDefinitionId: condition.fkMilestoneDefinitionId,
               date,
+              category: condition.category,
+              currentRecord: record.SO,
             });
           }
         }
@@ -570,6 +616,8 @@ export class MilestoneService {
             connect: { id: createMilestoneDto.fkMilestoneDefinitionId },
           },
           date: nextDay,
+          category: createMilestoneDto.category,
+          currentRecord: String(createMilestoneDto.currentRecord),
         },
       });
     } catch (err) {

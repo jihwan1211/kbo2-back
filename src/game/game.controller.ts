@@ -5,6 +5,7 @@ import {
   GetMatchupQueryDto,
   GetTodayMatchupQueryDto,
 } from './dto/getTodayMatch.dto';
+
 @Controller('games')
 export class GameController {
   constructor(private readonly gameService: GameService) {}

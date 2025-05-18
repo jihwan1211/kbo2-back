@@ -171,6 +171,8 @@ model milestone_record {
   player       player    @relation(fields: [fkPlayerId], references: [kboId])
   fkPlayerId   Int       @map("fk_player_id")
   date         DateTime  @default(now()) @db.Date
+  category     String    @db.VarChar(8)
+  currentRecord  String  @db.VarChar(12)
 }
 
 model game {
