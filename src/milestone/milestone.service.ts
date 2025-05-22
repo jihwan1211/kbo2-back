@@ -2,15 +2,14 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlayerService } from 'src/player/player.service';
 import { RecordService } from 'src/record/record.service';
-import {
-  CreateMilestoneDto,
-  PostMilestoneDto,
-} from './dto/create-milestone.dto';
+import { CreateMilestoneDto } from './dto/create-milestone.dto';
 import { AggreatePitcherRecordDto } from 'src/record/dto/aggreatePitcherRecord.dto';
 import { AggreateBatterRecordDto } from 'src/record/dto/aggreateBatterRecord.dto';
 import { RoasterService } from 'src/roaster/roaster.service';
 import { pipe, partition, toArray } from '@fxts/core';
 import { GetMilestonesDto } from './dto/getMilestones.dto';
+import { DateDto } from 'src/common/dto/date.dto';
+
 @Injectable()
 export class MilestoneService {
   private readonly logger = new Logger(MilestoneService.name);
@@ -21,12 +20,96 @@ export class MilestoneService {
     private readonly roasterService: RoasterService,
   ) {}
 
+  async getMatchupMilestones(dateDto: DateDto) {
+    try {
+      const today = new Date(dateDto.date);
+      const startOfDay = new Date(
+        Date.UTC(
+          today.getUTCFullYear(),
+          today.getUTCMonth(),
+          today.getUTCDate(),
+        ),
+      );
+      const endOfDay = new Date(
+        Date.UTC(
+          today.getUTCFullYear(),
+          today.getUTCMonth(),
+          today.getUTCDate() + 1,
+        ),
+      );
+
+      const todayMatchup = await this.prisma.game.findMany({
+        where: {
+          date: {
+            gt: startOfDay,
+            lt: endOfDay,
+          },
+        },
+        include: {
+          homeTeam: {
+            select: {
+              id: true,
+              symbol: true,
+              name: true,
+            },
+          },
+          awayTeam: {
+            select: {
+              id: true,
+              symbol: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      const result = {};
+      for await (const matchup of todayMatchup) {
+        const milestones = await this.getMatchupRecords(
+          matchup.homeTeam.id,
+          matchup.awayTeam.id,
+          startOfDay,
+        );
+
+        result[matchup.homeTeam.symbol] = [
+          ...milestones.homeTeamRoasterMatchedMilestones,
+        ];
+
+        result[matchup.awayTeam.symbol] = [
+          ...milestones.awayTeamRoasterMatchedMilestones,
+        ];
+      }
+
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to get matchup milestones', error);
+      throw error;
+    }
+  }
+
   async getMatchupRecords(homeTeamId: number, awayTeamId: number, date: Date) {
     try {
-      const [homeRoasterPlayers, awayRoasterPlayers] = await Promise.all([
+      let homeRoasterPlayers = [];
+      let awayRoasterPlayers = [];
+
+      [homeRoasterPlayers, awayRoasterPlayers] = await Promise.all([
         this.roasterService.getRoasterPlayers(homeTeamId, date),
         this.roasterService.getRoasterPlayers(awayTeamId, date),
       ]);
+
+      if (homeRoasterPlayers.length === 0 || awayRoasterPlayers.length === 0) {
+        const yesterday = new Date(date);
+        yesterday.setDate(date.getDate() - 1); // 하루 전 날짜로 설정
+
+        homeRoasterPlayers = await this.roasterService.getRoasterPlayers(
+          homeTeamId,
+          yesterday,
+        );
+        awayRoasterPlayers = await this.roasterService.getRoasterPlayers(
+          awayTeamId,
+          yesterday,
+        );
+      }
 
       const [homeTeamMilestones, awayTeamMilestones] = await Promise.all([
         this.getMilestones(homeTeamId, date),
@@ -172,27 +255,22 @@ export class MilestoneService {
     }
   }
 
-  async createMilestones(postMilestoneDto: PostMilestoneDto) {
+  async createMilestones(dateDto: DateDto) {
+    const { date } = dateDto;
     try {
       const activeBatters = await this.playerService.getActiveBatters();
       const activePitchers = await this.playerService.getAcivePitchers();
 
       const aggregateBatterRecords =
-        this.recordService.getAggregateBatterRecords(
-          activeBatters,
-          postMilestoneDto.date,
-        );
+        this.recordService.getAggregateBatterRecords(activeBatters, date);
       const aggregatePitcherRecords =
-        this.recordService.getAggregatePitcherRecords(
-          activePitchers,
-          postMilestoneDto.date,
-        );
+        this.recordService.getAggregatePitcherRecords(activePitchers, date);
 
       for await (const record of aggregateBatterRecords)
-        await this.createBatterMilestoneRecord(record, postMilestoneDto.date);
+        await this.createBatterMilestoneRecord(record, date);
 
       for await (const record of aggregatePitcherRecords) {
-        await this.createPitcherMilestoneRecord(record, postMilestoneDto.date);
+        await this.createPitcherMilestoneRecord(record, date);
       }
     } catch (err) {
       this.logger.error('Failed to create milestones', err);
@@ -200,10 +278,8 @@ export class MilestoneService {
     }
   }
 
-  async createOnePlayerMilestones(
-    id: number,
-    postMilestoneDto: PostMilestoneDto,
-  ) {
+  async createOnePlayerMilestones(id: number, dateDto: DateDto) {
+    const { date } = dateDto;
     try {
       const player = await this.playerService.findOne(id);
 
@@ -214,24 +290,15 @@ export class MilestoneService {
 
       if (player.position === '투수') {
         const aggregatePitcherRecords =
-          this.recordService.getAggregatePitcherRecords(
-            [player],
-            postMilestoneDto.date,
-          );
+          this.recordService.getAggregatePitcherRecords([player], date);
         for await (const record of aggregatePitcherRecords) {
-          await this.createPitcherMilestoneRecord(
-            record,
-            postMilestoneDto.date,
-          );
+          await this.createPitcherMilestoneRecord(record, date);
         }
       } else {
         const aggregateBatterRecords =
-          this.recordService.getAggregateBatterRecords(
-            [player],
-            postMilestoneDto.date,
-          );
+          this.recordService.getAggregateBatterRecords([player], date);
         for await (const record of aggregateBatterRecords)
-          await this.createBatterMilestoneRecord(record, postMilestoneDto.date);
+          await this.createBatterMilestoneRecord(record, date);
       }
     } catch (err) {
       this.logger.error('Failed to create one player milestones', err);

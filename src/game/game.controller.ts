@@ -1,18 +1,16 @@
 import { Controller, Post, Body, Get, Query, Param } from '@nestjs/common';
 import { GameService } from './game.service';
 import { UpsertGameDto } from './dto/upsertGame.dto';
-import {
-  GetMatchupQueryDto,
-  GetTodayMatchupQueryDto,
-} from './dto/getTodayMatch.dto';
+import { GetMatchupQueryDto } from './dto/getTodayMatch.dto';
+import { DateDto } from 'src/common/dto/date.dto';
 
-@Controller('games')
+@Controller('api/v1/games')
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 
   @Get('')
-  getTodayMatchup(@Query() query: GetTodayMatchupQueryDto) {
-    return this.gameService.getTodayMatchup(query.date);
+  getTodayMatchup(@Query() dateDto: DateDto) {
+    return this.gameService.getTodayMatchup(dateDto);
   }
 
   @Get('/:teamSymbols')

@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpsertGameDto } from './dto/upsertGame.dto';
-// import { GetTodayMatchDto } from './dto/getTodayMatch.dto';
-// import { plainToInstance } from 'class-transformer';
 import { MilestoneService } from 'src/milestone/milestone.service';
 import { TeamService } from 'src/team/team.service';
+import { GetTodayMatchDto } from './dto/getTodayMatch.dto';
+import { plainToInstance } from 'class-transformer';
+import { DateDto } from 'src/common/dto/date.dto';
 
 @Injectable()
 export class GameService {
@@ -15,8 +16,9 @@ export class GameService {
     private readonly teamService: TeamService,
   ) {}
 
-  async getTodayMatchup(date: string) {
+  async getTodayMatchup(dateDto: DateDto) {
     try {
+      const { date } = dateDto;
       const today = new Date(date);
       const startOfDay = new Date(
         Date.UTC(
@@ -58,40 +60,9 @@ export class GameService {
         },
       });
 
-      return Promise.all(
-        todayMatchup.map(async (matchup) => {
-          const milestones = await this.milestoneService.getMatchupRecords(
-            matchup.homeTeam.id,
-            matchup.awayTeam.id,
-            startOfDay,
-          );
-
-          return {
-            id: matchup.id,
-            date: matchup.date,
-            homeTeamScore: matchup.homeTeamScore,
-            awayTeamScore: matchup.awayTeamScore,
-            homeTeam: {
-              ...matchup.homeTeam,
-              roasterMatchedMilestones:
-                milestones.homeTeamRoasterMatchedMilestones,
-              roasterUnmatchedMilestones:
-                milestones.homeTeamRoasterUnmatchedMilestones,
-            },
-            awayTeam: {
-              ...matchup.awayTeam,
-              roasterMatchedMilestones:
-                milestones.awayTeamRoasterMatchedMilestones,
-              roasterUnmatchedMilestones:
-                milestones.awayTeamRoasterUnmatchedMilestones,
-            },
-          };
-        }),
-      );
-
-      // return plainToInstance(GetTodayMatchDto, todayMatchup, {
-      //   excludeExtraneousValues: true,
-      // });
+      return plainToInstance(GetTodayMatchDto, todayMatchup, {
+        excludeExtraneousValues: true,
+      });
     } catch (err) {
       this.logger.error('error while getting today matchup', err);
       throw err;
