@@ -6,6 +6,7 @@ import { TeamService } from 'src/team/team.service';
 import { GetTodayMatchDto } from './dto/getTodayMatch.dto';
 import { plainToInstance } from 'class-transformer';
 import { DateDto } from 'src/common/dto/date.dto';
+import { convertKSTtoUTC } from 'src/utils/date.utils';
 
 @Injectable()
 export class GameService {
@@ -156,24 +157,25 @@ export class GameService {
 
   async upsertGame(upsertGameDto: UpsertGameDto) {
     try {
-      console.log(upsertGameDto.gameSchedule);
       upsertGameDto.gameSchedule.forEach(async (game) => {
+        const utcDate = convertKSTtoUTC(game.date);
+
         await this.prisma.game.upsert({
           where: {
             date_fkHomeTeamId_fkAwayTeamId: {
-              date: game.date,
+              date: utcDate,
               fkHomeTeamId: game.homeTeamId,
               fkAwayTeamId: game.awayTeamId,
             },
           },
           update: {
-            date: game.date,
+            date: utcDate,
             homeTeamScore: game.homeTeamScore,
             awayTeamScore: game.awayTeamScore,
             memo: game.memo,
           },
           create: {
-            date: game.date,
+            date: utcDate,
             homeTeam: {
               connect: { id: game.homeTeamId },
             },
